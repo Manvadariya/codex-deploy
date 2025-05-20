@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}CodeX - AI-Powered Coding Platform{% endblock %}
+
+{% block body_class %}editor-page{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+{% endblock %}
+
+{% block header %}
+<!-- Custom header for editor page -->
+{% endblock %}
+
+{% block content %}
+    {% csrf_token %}
+    <div class="window-container">
+        <!-- Navigation Bar -->
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center flex-grow-1">
+                    <div class="window-controls me-3">
+                        <div class="control-button close"></div>
+                        <div class="control-button minimize"></div>
+                        <div class="control-button maximize"></div>
+                    </div>
+                    <a class="navbar-brand" href="">
+                        <img src="{% static 'codexc.png' %}" alt="CodeX Logo" height="30px"/>
+                    </a>
+                    <div class="d-flex justify-content-center flex-grow-1">
+                        <!-- Share and collaborate buttons removed -->
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-sm mac-button me-2" title="Settings (Ctrl+,)" style="background: none; border: none; color: var(--text-color); " id="settings-button">
+                            <i class="bi bi-gear fs-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-container">
+            <!-- Code Editor Panel -->
+            <div class="code-panel">
+                <div class="code-editor-container">
+                    <div class="editor-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="d-flex align-items-center">
+                            <span class="fw-bold text-white" id="filename">Main.cpp</span>
+                        </div>
+                        <div class="d-flex align-items-center" style="gap: 10px;">
+                            <select class="custom-dropdown" id="language-selector" style="width: 150px; height: 30px;">
+                                <option value="cpp">C++</option>
+                                <option value="c">C</option>
+                                <option value="python">Python</option>
+                                <option value="javascript">JavaScript</option>
+                                <option value="java">Java</option>
+                                <option value="php">PHP</option>
+                                <option value="ruby">Ruby</option>
+                                <option value="perl">Perl</option>
+                                <option value="csharp">C#</option>
+                                <option value="ocaml">OCaml</option>
+                                <option value="vbnet">VB.NET</option>
+                                <option value="swift">Swift</option>
+                                <option value="fortran">Fortran</option>
+                                <option value="haskell">Haskell</option>
+                                <option value="assembly">Assembly</option>
+                                <option value="prolog">Prolog</option>
+                            </select>
+
+                            <select class="theme-dropdown theme-selector" id="theme-selector" style="width: 120px; height: 30px;">
+                                <option value="xcode">Xcode</option>
+                                <option value="ambiance">Ambiance</option>
+                                <option value="chaos">Chaos</option>
+                                <option value="chrome">Chrome</option>
+                                <option value="clouds">Clouds</option>
+                                <option value="clouds_midnight">Clouds Midnight</option>
+                                <option value="cobalt">Cobalt</option>
+                                <option value="crimson_editor">Crimson Editor</option>
+                                <option value="dawn">Dawn</option>
+                                <option value="dracula">Dracula</option>
+                                <option value="dreamweaver">Dreamweaver</option>
+                                <option value="eclipse">Eclipse</option>
+                                <option value="github">GitHub</option>
+                                <option value="gob">GOB</option>
+                                <option value="gruvbox">Gruvbox</option>
+                                <option value="idle_fingers">Idle Fingers</option>
+                                <option value="iplastic">iPlastic</option>
+                                <option value="katzenmilch">Katzenmilch</option>
+                                <option value="kr_theme">KR Theme</option>
+                                <option value="kuroir">Kuroir</option>
+                                <option value="merbivore">Merbivore</option>
+                                <option value="merbivore_soft">Merbivore Soft</option>
+                                <option value="mono_industrial">Mono Industrial</option>
+                                <option value="monokai">Monokai</option>
+                                <option value="nord_dark">Nord Dark</option>
+                                <option value="pastel_on_dark">Pastel on Dark</option>
+                                <option value="solarized_dark">Solarized Dark</option>
+                                <option value="solarized_light">Solarized Light</option>
+                                <option value="sqlserver">SQL Server</option>
+                                <option value="terminal">Terminal</option>
+                                <option value="textmate">TextMate</option>
+                                <option value="tomorrow">Tomorrow</option>
+                                <option value="tomorrow_night">Tomorrow Night</option>
+                                <option value="tomorrow_night_blue">Tomorrow Night Blue</option>
+                                <option value="tomorrow_night_bright">Tomorrow Night Bright</option>
+                                <option value="tomorrow_night_eighties">Tomorrow Night Eighties</option>
+                                <option value="twilight" selected>Twilight</option>
+                                <option value="custom_twilight">Custom</option>
+                                <option value="vibrant_ink">Vibrant Ink</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="code-editor">
+                        <div id="editor"></div>
+                    </div>
+                    <!-- Horizontal Resize Handle -->
+                    <div class="resize-handle-horizontal" id="resize-handle-horizontal"></div>
+                </div>
+                <div class="output-container">
+                    <div class="output-header">
+                        <div class="d-flex align-items-center">
+                            <span class="fw-bold">Output</span>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-accent" id="run-button">
+                                <i class="bi bi-play-fill"></i> Run
+                            </button>
+                            <button class="btn btn-sm btn-outline-accent ms-2" id="save-button">
+                                <i class="bi bi-save"></i> Save
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Loading overlay for output -->
+                    <div id="output-loading" style="display: none; position: absolute; background: rgba(0,0,0,0.7); z-index: 10; top: 0; left: 0; right: 0; bottom: 0; justify-content: center; align-items: center; border-radius: 8px;">
+                        <div class="spinner-border text-light" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="output-content">
+                        <p style="color: #ddd; text-align: center;">Output will be displayed here.</p>
+                    </div>
+                    
+                    <!-- Add a hidden form for submitting code to the database -->
+                    <form id="save-code-form" method="POST" action="{% url 'create_code' %}" style="display: none;">
+                        {% csrf_token %}
+                        <input type="text" name="title" id="code-title">
+                        <input type="text" name="description" id="code-description">
+                        <input type="text" name="language" id="code-language">
+                        <textarea name="code_content" id="code-content"></textarea>
+                        <textarea name="user_input" id="user-input"></textarea>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Vertical Resize Handle -->
+            <div class="resize-handle-vertical" id="resize-handle-vertical"></div>
+
+            <!-- Problem Description Panel -->
+            <div class="problem-panel resizable">
+                <div class="tab-container">
+                    <div class="tab active" data-target="chat">AI Chat</div>
+                    <div class="tab" data-target="input">Input</div>
+                </div>
+                <div class="panel-content" id="input-panel">
+                    <!-- Input content -->
+                    <div id="input-editor" class="input-editor"></div>
+                    </div>
+                <div class="panel-content active" id="chat-panel">
+                    <!-- Chat content -->
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="chat-message assistant">
+                                <div class="message-content">
+                                    <h2>Hello!</h2>
+                                    <p>How can I help you with your coding today? Feel free to ask any questions about your code.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input-container">
+                            <textarea id="chat-input" placeholder="Ask a question about your code..."></textarea>
+                            <button id="send-chat" class="btn-accent">
+                                <i class="bi bi-send"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="editor-settings-panel" style="display: none !important; position: fixed; top: 60px; right: 20px; width: 300px; background-color: var(--secondary-color); border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 10000; overflow: hidden;">
+        <div style="padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <h5 style="margin: 0; color: var(--text-color);">Editor Settings <span style="font-size: 12px; opacity: 0.7;">(Ctrl+,)</span></h5>
+            <button id="close-settings" class="btn btn-sm" style="background: none; border: none; color: var(--text-color);"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div style="padding: 15px; max-height: 70vh; overflow-y: auto;">
+            <div class="mb-3">
+                <label for="github-api-key" class="form-label">GitHub/OpenAI API Key <span style="color: #ff5f57;">(required for AI Chat)</span></label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="github-api-key" name="github-api-key" placeholder="Enter GitHub token (ghp_) or OpenAI key (sk-)"
+                           style="background-color: var(--primary-color); color: var(--text-color); border-color: var(--border-color);">
+                    <button class="btn btn-outline-secondary" type="button" id="toggle-api-key-visibility"
+                            style="background-color: var(--primary-color); color: var(--text-color); border-color: var(--border-color);">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                <small class="form-text" style="margin-top: 5px; font-size: 0.75rem; color: rgb(255, 255, 255);">
+                    Your API key is stored locally and used for AI model calls. Supports:
+                    <a href="https://github.com/settings/tokens" target="_blank" style="color: var(--accent-color);">GitHub tokens</a>
+                </small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Font Size</label>
+                <div class="d-flex align-items-center">
+                    <input type="range" class="form-range" id="fontSize" min="10" max="24" step="1" value="13">
+                    <span id="fontSizeValue" class="ms-2" style="color: var(--text-color); min-width: 30px;">13</span>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="showInvisibles">
+                    <label class="form-check-label" for="showInvisibles">Show Invisible Characters</label>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="wrapText">
+                    <label class="form-check-label" for="wrapText">Word Wrap</label>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="showGutter" checked>
+                    <label class="form-check-label" for="showGutter">Show Line Numbers</label>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="highlightActiveLine" checked>
+                    <label class="form-check-label" for="highlightActiveLine">Highlight Active Line</label>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="showPrintMargin">
+                    <label class="form-check-label" for="showPrintMargin">Show Print Margin</label>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="enableSnippets" checked>
+                    <label class="form-check-label" for="enableSnippets">Enable Snippets</label>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="enableBasicAutocompletion" checked>
+                    <label class="form-check-label" for="enableBasicAutocompletion">Basic Autocompletion</label>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="enableLiveAutocompletion" checked>
+                    <label class="form-check-label" for="enableLiveAutocompletion">Live Autocompletion</label>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="keybinding" class="form-label">Key Binding</label>
+                <select id="keybinding" class="form-select form-select-sm" style="background-color: var(--primary-color); color: var(--text-color); border-color: var(--border-color);">
+                    <option value="ace" selected>Default (Ace)</option>
+                    <option value="vim">Vim</option>
+                    <option value="emacs">Emacs</option>
+                    <option value="vscode">VS Code</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="tabSize" class="form-label">Tab Size</label>
+                <select id="tabSize" class="form-select form-select-sm" style="background-color: var(--primary-color); color: var(--text-color); border-color: var(--border-color);">
+                    <option value="2">2 spaces</option>
+                    <option value="4" selected>4 spaces</option>
+                    <option value="8">8 spaces</option>
+                </select>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block common_scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/ext-language_tools.js"></script>
+    
+    <!-- Load language modes for all supported languages -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-c_cpp.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-python.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-javascript.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-java.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-php.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-ruby.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-perl.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-csharp.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-ocaml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-vbscript.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-swift.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-pascal.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-fortran.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-haskell.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-assembly_x86.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-prolog.js"></script>
+    
+    <script>
+        // Pass Django template variables to JavaScript
+        window.CHAT_API_URL = "{% url 'chat_api' %}";
+        window.DASHBOARD_URL = "{% url 'dashboard' %}";
+    </script>
+{% endblock %}
+
+{% block page_scripts %}
+    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/settings.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Register - CodeX{% endblock %}
+
+{% block body_class %}register-page{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/register.css' %}">
+{% endblock %}
+
+{% block header %}
+<!-- Intentionally empty to override the base header -->
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <img src="{% static 'codexc.png' %}" alt="CodeX Logo" class="logo" style="width: 120px; height: auto;">
+        <h1>Create an Account</h1>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}success{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <form method="post" action="{% url 'register' %}">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <div class="help-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% if field.errors %}
+                        <ul class="errorlist">
+                            {% for error in field.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+        
+        <div class="footer">
+            Already have an account? <a href="{% url 'login_page' %}">Log in</a>
+        </div>
+    </div>
+{% endblock %}

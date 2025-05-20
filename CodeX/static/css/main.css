@@ -1,0 +1,695 @@
+:root {
+    --primary-color: #1e1e1e;
+    --secondary-color: #282828;
+    --accent-color: #0a84ff;
+    --accent-hover: #007aff;
+    --text-color: #f5f5f7;
+    --border-color: #3b3b3b;
+    --header-height: 50px;
+    --tab-height: 40px;
+    --window-border-radius: 10px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--primary-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+body {
+    background: linear-gradient(135deg, #134e96, #0c3772);
+    color: var(--text-color);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.window-container {
+    width: 95%;
+    height: 90vh;
+    background-color: var(--primary-color);
+    border-radius: var(--window-border-radius);
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar {
+    background-color: var(--primary-color) !important;
+    border-bottom: 1px solid var(--border-color);
+    height: calc(var(--header-height) + 10px);
+    padding: 0 20px;
+    border-top-left-radius: var(--window-border-radius);
+    border-top-right-radius: var(--window-border-radius);
+}
+
+.window-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.control-button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.close {
+    background-color: #ff5f57;
+}
+
+.minimize {
+    background-color: #febc2e;
+}
+
+.maximize {
+    background-color: #28c840;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+}
+
+.logo-text {
+    font-weight: 600;
+    background: linear-gradient(90deg, #FFFFFF 0%, #c1d8ee 50%, #0a84ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-left: 8px;
+}
+
+.main-container {
+    display: flex;
+    flex: 1;
+    background-color: var(--primary-color);
+    overflow: hidden;
+}
+
+.code-panel {
+    width: 60%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--primary-color);
+    border-radius: 8px;
+    margin: 10px;
+}
+
+.problem-panel {
+    width: 40%;
+    overflow-y: auto;
+    background-color: var(--primary-color);
+    border-radius: 8px;
+    margin: 10px;
+    margin-left: 0;
+}
+
+.tab-container {
+    display: flex;
+    background-color: var(--primary-color);
+    height: var(--tab-height);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.tab.active {
+    border-bottom: 2px solid var(--accent-color);
+    color: var(--accent-color);
+}
+
+.panel-content {
+    display: none;
+    height: calc(100% - var(--tab-height));
+    padding: 15px;
+    overflow-y: auto;
+}
+
+.panel-content.active {
+    display: block;
+}
+
+/* Chat styles */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: var(--secondary-color);
+    border-radius: 6px;
+}
+
+.chat-message {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-message.user {
+    align-items: flex-end;
+}
+
+.chat-message.assistant {
+    align-items: flex-start;
+}
+
+.message-content {
+    max-width: 80%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.chat-message.user .message-content {
+    background-color: var(--accent-color);
+    color: white;
+    border-top-right-radius: 2px;
+}
+
+.chat-message.assistant .message-content {
+    background-color: #333;
+    color: var(--text-color);
+    border-top-left-radius: 2px;
+}
+
+/* Adding styles for improved chat formatting */
+.message-content h1, 
+.message-content h2, 
+.message-content h3 {
+    font-weight: 700;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
+.message-content h1 {
+    font-size: 20px;
+}
+
+.message-content h2 {
+    font-size: 18px;
+}
+
+.message-content h3 {
+    font-size: 16px;
+}
+
+.message-content ul {
+    padding-left: 20px;
+}
+
+.message-content li {
+    margin-bottom: 5px;
+}
+
+.code-block-container {
+    position: relative;
+    margin: 10px 0;
+}
+
+.code-language-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: #444;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 5px 0 5px 0;
+    z-index: 2;
+}
+
+/* Remove copy button styles
+.copy-code-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 0 5px 0 5px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.code-with-language-label .copy-code-button {
+    right: 0;
+}
+*/
+
+.chat-input-container {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}
+
+#chat-input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    resize: none;
+    font-size: 14px;
+    min-height: 45px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+#chat-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+#send-chat {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--accent-color);
+    color: white;
+    cursor: pointer;
+    align-self: flex-end;
+    height: 45px;
+    width: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#send-chat:hover {
+    background-color: var(--accent-hover);
+}
+
+/* Input styles */
+.input-editor {
+    height: 100%;
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.markdown-content {
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.markdown-content h3 {
+    margin-bottom: 15px;
+    color: var(--accent-color);
+}
+
+.markdown-content p {
+    margin-bottom: 15px;
+}
+
+.content-container {
+    padding: 20px;
+    overflow-y: auto;
+    height: calc(100% - var(--tab-height));
+}
+
+.code-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 70%;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+}
+
+.editor-header, .output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: var(--primary-color);
+}
+
+.code-editor {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+/* Fix for cursor position issue */
+.ace_cursor-layer {
+    pointer-events: none;
+}
+
+.ace_text-layer {
+    font-variant-ligatures: none !important;
+    letter-spacing: 0 !important;
+}
+
+#editor {
+    width: 100%;
+    height: 100%;
+    font-feature-settings: normal !important;
+}
+
+.ace_editor, .ace_text-input, .ace_editor * {
+    font-family: 'SF Mono', Menlo, Monaco, 'Courier New', monospace !important;
+    font-weight: normal !important;
+    letter-spacing: 0 !important;
+    line-height: normal !important;
+    
+}
+.ace_editor{
+    border-radius: 10px;
+}
+
+.output-container {
+    height: 30%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-radius: 8px;
+    background-color: var(--primary-color);
+}
+
+.output-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: #111111;
+    border-radius: 15px;
+}
+
+.btn-accent, .btn-outline-accent {
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.btn-accent {
+    background-color: var(--accent-color);
+    border: none;
+    color: #ffffff;
+}
+
+.btn-accent:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+.btn-outline-accent {
+    border: 1px solid var(--accent-color);
+    color: var(--accent-color);
+    background-color: transparent;
+}
+
+.btn-outline-accent:hover {
+    background-color: var(--accent-color);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.problem-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: white;
+}
+
+.difficulty {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    margin-left: 10px;
+    color: white;
+}
+
+.difficulty.easy { background-color: #00b8a3; }
+.difficulty.medium { background-color: #ffa116; }
+.difficulty.hard { background-color: #ff375f; }
+
+pre {
+    background-color: #1a1a1a;
+    padding: 15px;
+    border-radius: 6px;
+    overflow-x: auto;
+    color: #ddd;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+}
+
+.testcase {
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 12px;
+}
+
+.testcase-header {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #ddd;
+}
+
+.testcase-input, .testcase-output {
+    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+.result-success, .result-fail {
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.result-success { color: #28c840; }
+.result-fail { color: #ff5f57; }
+
+.resize-handle-vertical {
+    width: 3px;
+    background-color: var(--border-color);
+    cursor: col-resize;
+}
+
+.resize-handle-horizontal {
+    height: 3px;
+    background-color: var(--border-color);
+    cursor: row-resize;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+}
+
+.resizable { position: relative; }
+
+.custom-dropdown, .theme-dropdown {
+    background-color: #333;
+    color: #f5f5f7;
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.85rem;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.custom-dropdown:focus, .theme-dropdown:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.btn.mac-button {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+}
+
+.btn.mac-button:hover {
+    background-color: #444;
+}
+
+.btn.mac-button i {
+    font-size: 1rem;
+}
+
+.ai-assistant-button {
+    background-color: #0a84ff;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+}
+
+.ai-assistant-button:hover {
+    background-color: #007aff;
+    color: white;
+}
+
+.qr-button {
+    background-color: #555;
+    color: white;
+}
+
+.qr-button:hover {
+    background-color: #666;
+    color: white;
+}
+
+.feature-badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    background-color: #0a84ff;
+    color: white;
+    border-radius: 10px;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.platform-info {
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: rgba(10, 132, 255, 0.1);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-color);
+}
+
+/* Add this CSS for fullscreen mode */
+.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999; /* Ensure it covers everything */
+    background: linear-gradient(135deg, #134e96, #0c3772); /* Same background as body */
+    border-radius: 0; /* Remove border radius */
+    margin: 0; /* Ensure no margin */
+    padding: 0; /* Ensure no padding */
+}
+
+/* New rule to set navbar border radius to 0 in fullscreen mode */
+.fullscreen .navbar {
+    border-radius: 0 !important; /* Override any existing border radius */
+}
+
+/* Ensure body and html have no margin or padding */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%; /* Ensure full height */
+}
+
+/* Add border radius to the Ace Editor's gutter and scroller */
+.ace_gutter {
+    border-top-left-radius: 8px; /* Adjust as needed */
+    border-bottom-left-radius: 8px; /* Adjust as needed */
+    background-color: var(--secondary-color); /* Match with your theme */
+}
+
+.ace_scroller {
+    border-top-right-radius: 8px; /* Adjust as needed */
+    border-bottom-right-radius: 8px; /* Adjust as needed */
+}
+
+.message-content .code-block {
+    position: relative;
+    background-color: #1e1e1e;
+    padding: 15px;
+    border-radius: 6px;
+    margin: 10px 0;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+}
+
+.message-content .code-block .code-language-label {
+    position: absolute;
+    top: 0;
+    right: 30px; /* Adjusted to make space for copy button */
+    background-color: #000000;
+    color: #888;
+    padding: 4px 8px;
+    border-radius: 0 6px 0 6px;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+}
+
+.message-content .code-block .code-copy-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #000000;
+    color: #888;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 0 6px 0 6px;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.message-content .code-block .code-copy-btn:hover {
+    background-color: #444;
+    color: #eee;
+}
+
+.message-content .code-block pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #ddd;
+}
+
+/* Settings panel styles */
+#editor-settings-panel.settings-panel {
+    display: none;
+}
+
+#editor-settings-panel.settings-panel.visible {
+    display: block;
+}

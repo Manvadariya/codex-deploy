@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{%load static %}
+
+{% block title %}CodeX Dashboard{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block header %}
+    <header>
+        <div class="logo-section">
+            <img src="{% static 'codexc.png' %}" alt="CodeX Logo"/>
+        </div>
+        <div class="nav-elements">
+            <div class="username-display">{{ user.username }}</div>
+            <div class="user-avatar">
+                <span>{{ user.username|slice:":2"|upper }}</span>
+            </div>
+            <form action="{% url 'logout_view' %}" method="get">
+                <button type="submit" class="logout-btn">
+                    <span class="material-symbols-outlined">logout</span> 
+                    <span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </header>
+{% endblock %}
+
+{% block content %}
+    <div id="webcrumbs">
+        <main>
+            <div class="page-header">
+                <h1>My Codes</h1>
+                <a href="{% url 'create_code' %}">
+                    <button class="new-project-btn">
+                        <span class="material-symbols-outlined">add</span> New Code
+                    </button>
+                </a>
+            </div>
+            <div class="projects-grid">
+                {% if snippets %}
+                    {% for snippet in snippets %}
+                        {% if "Temporary Execution" not in snippet.title and "AI Chat" not in snippet.title %}
+                        <div class="project-card">
+                            <div class="card-header">
+                                <div>
+                                    <h2 class="project-title">{{ snippet.title }}</h2>
+                                    <div class="project-meta">
+                                        <span class="language-tag">{{ snippet.language }}</span>
+                                        <span class="timestamp">Last edited: {{ snippet.updated_at|timesince }} ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="project-description">
+                                {{ snippet.description|default:"No description provided." }}
+                            </p>
+                            <div class="card-footer">
+                                <div class="action-buttons">
+                                    <button class="action-btn delete-btn" onclick="confirmDelete({{ snippet.id }})">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
+                                </div>
+                                <a href="{% url 'code_detail' pk=snippet.id %}">
+                                    <button class="view-code-btn">View Code</button>
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="no-projects">
+                        <p>You don't have any code projects yet. Click on "New Project" to create your first code!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+{% endblock %}
+
+{% block page_scripts %}
+    <script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}
