@@ -74,11 +74,16 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 
 # Provider specific settings
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+
+SOCIALACCOUNT_PROVIDERS = {}
+
+if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
+    SOCIALACCOUNT_PROVIDERS['google'] = {
         'APP': {
-            'client_id': os.environ.get('GOOGLE_CLIENT_ID'),
-            'secret': os.environ.get('GOOGLE_CLIENT_SECRET'),
+            'client_id': GOOGLE_CLIENT_ID,
+            'secret': GOOGLE_CLIENT_SECRET,
             'key': ''
         },
         'SCOPE': [
@@ -89,7 +94,6 @@ SOCIALACCOUNT_PROVIDERS = {
             'access_type': 'online',
         }
     }
-}
 
 # Skip the intermediate page
 SOCIALACCOUNT_LOGIN_ON_GET = True
