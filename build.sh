@@ -13,7 +13,7 @@ python CodeX/manage.py migrate
 python CodeX/manage.py collectstatic --no-input --clear
 
 # Run database initialization script
-bash CodeX/init_db.sh
+bash init_db.sh
 
 # The init_db.sh script will handle initial table creation and migrations
 echo "Build process complete. Database initialization and migrations will be handled by init_db.sh before server start."
