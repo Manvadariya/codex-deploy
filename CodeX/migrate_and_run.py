@@ -19,43 +19,109 @@ def main():
         # Run migrations with verbosity for debugging
         print("Running database migrations...")
         
+        # Check database engine type
+        from django.conf import settings
+        db_engine = settings.DATABASES['default']['ENGINE']
+        print(f"Using database engine: {db_engine}")
+        
         # First, check if the migration history table exists
         from django.db import connection
         with connection.cursor() as cursor:
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-            tables = [row[0] for row in cursor.fetchall()]
-            print(f"Existing tables: {tables}")
+            if 'sqlite' in db_engine:
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                tables = [row[0] for row in cursor.fetchall()]
+            elif 'postgresql' in db_engine:
+                cursor.execute("""
+                    SELECT table_name 
+                    FROM information_schema.tables 
+                    WHERE table_schema = 'public'
+                """)
+                tables = [row[0] for row in cursor.fetchall()]
+            else:
+                tables = ['Unknown database engine']
+            
+            print(f"Existing tables before migration: {tables}")
         
-        # Run initial migrations for auth app specifically
-        print("Running auth migrations first...")
-        call_command('migrate', 'auth', verbosity=3)
+        # Make sure we explicitly run migrations for critical apps in order
+        critical_apps = ['auth', 'admin', 'contenttypes', 'sessions', 'sites', 'socialaccount', 'core']
+        for app in critical_apps:
+            print(f"Running migrations for {app}...")
+            try:
+                call_command('migrate', app, verbosity=3)
+            except Exception as e:
+                print(f"Error migrating {app}: {str(e)}")
         
-        # Then migrate the rest
-        print("Running all other migrations...")
+        # Then migrate any remaining apps
+        print("Running remaining migrations...")
         call_command('migrate', verbosity=3)
         
-        # Verify auth_user table exists after migration
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='auth_user';")
-            if cursor.fetchone():
-                print("auth_user table exists!")
-            else:
-                print("WARNING: auth_user table still doesn't exist after migrations!")
+        # Verify critical tables exist after migration
+        critical_tables = ['auth_user', 'django_site', 'socialaccount_socialapp']
+        missing_tables = []
         
-        # Set up the default site
-        try:
-            site = Site.objects.get(id=1)
-            site.domain = "codex-j9wc.onrender.com"
-            site.name = "CodeX"
-            site.save()
-            print(f"Updated site: {site.domain}")
-        except Site.DoesNotExist:
-            site = Site.objects.create(
-                id=1,
-                domain="codex-j9wc.onrender.com",
-                name="CodeX"
-            )
-            print(f"Created new site: {site.domain}")
+        with connection.cursor() as cursor:
+            for table in critical_tables:
+                try:
+                    if 'sqlite' in db_engine:
+                        cursor.execute(f"SELECT COUNT(*) FROM {table}")
+                    elif 'postgresql' in db_engine:
+                        cursor.execute(f"SELECT COUNT(*) FROM \"{table}\"")
+                    
+                    count = cursor.fetchone()[0]
+                    print(f"Table {table}: {count} rows")
+                except Exception as e:
+                    print(f"Error checking table {table}: {str(e)}")
+                    missing_tables.append(table)
+        
+        if missing_tables:
+            print(f"WARNING: The following tables are still missing: {missing_tables}")
+        else:
+            print("All critical tables exist!")
+        
+        # Create the Site entry manually to ensure it exists
+        print("Setting up Site entry...")
+        from django.db import transaction
+        
+        with transaction.atomic():
+            # Try two different methods to create the site
+            try:
+                # Method 1: Use get_or_create
+                site, created = Site.objects.get_or_create(
+                    id=1,
+                    defaults={
+                        'domain': "codex-j9wc.onrender.com",
+                        'name': "CodeX"
+                    }
+                )
+                if created:
+                    print(f"Created new site: {site.domain}")
+                else:
+                    site.domain = "codex-j9wc.onrender.com"
+                    site.name = "CodeX"
+                    site.save()
+                    print(f"Updated existing site: {site.domain}")
+            except Exception as e:
+                print(f"Method 1 failed: {str(e)}")
+                
+                try:
+                    # Method 2: Direct SQL insertion
+                    with connection.cursor() as cursor:
+                        if 'sqlite' in db_engine:
+                            cursor.execute("""
+                                INSERT OR REPLACE INTO django_site (id, domain, name)
+                                VALUES (1, 'codex-j9wc.onrender.com', 'CodeX')
+                            """)
+                        elif 'postgresql' in db_engine:
+                            cursor.execute("""
+                                INSERT INTO django_site (id, domain, name)
+                                VALUES (1, 'codex-j9wc.onrender.com', 'CodeX')
+                                ON CONFLICT (id) DO UPDATE
+                                SET domain = 'codex-j9wc.onrender.com', name = 'CodeX'
+                            """)
+                    print("Created/updated site using direct SQL")
+                except Exception as e2:
+                    print(f"Method 2 also failed: {str(e2)}")
+                    # At this point both methods failed, but we continue
         
         print("Setup complete!")
     except Exception as e:

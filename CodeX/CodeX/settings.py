@@ -37,19 +37,25 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') or ['localhost', 
 
 # Application definition
 
+# Order of INSTALLED_APPS is important for migrations
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    # Django core apps first (important for migrations order)
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'django.contrib.sites', # Required by allauth
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites', # Required by allauth
-    'core', # Your app
+    'django.contrib.admin',
+    
+    # Third-party apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google', # for Google OAuth
+    
+    # Local apps
+    'core', # Your app
 ]
 
 MIDDLEWARE = [
