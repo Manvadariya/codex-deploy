@@ -3,11 +3,11 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 import json
 import traceback
-from .models import CodeSnippet, AIAssistance
+from .models import CodeSnippet, AIAssistance, CodeExecution
 import uuid
 from openai import OpenAI
 from django.utils import timezone
@@ -225,7 +225,23 @@ def create_code(request):
 @login_required
 def code_detail(request, pk):
     snippet = get_object_or_404(CodeSnippet, pk=pk, owner=request.user)
-    return render(request, 'code_detail.html', {'snippet': snippet})
+    
+    # Get all versions of this snippet
+    versions = []
+    if snippet.parent_snippet:
+        # This is a version, get the parent and all its versions
+        root = snippet.parent_snippet
+        versions = list(root.versions.all().order_by('version_number'))
+        versions.insert(0, root)  # Add the root as the first version
+    elif hasattr(snippet, 'versions') and snippet.versions.exists():
+        # This is a root with versions
+        versions = list(snippet.versions.all().order_by('version_number'))
+        versions.insert(0, snippet)  # Add the root as the first version
+    
+    return render(request, 'code_detail.html', {
+        'snippet': snippet,
+        'versions': versions
+    })
 
 def logout_view(request):
     logout(request)
@@ -242,6 +258,55 @@ def delete_code(request, pk):
 def shared_code(request, pk):
     snippet = get_object_or_404(CodeSnippet, pk=pk)
     return render(request, 'shared_code.html', {'snippet': snippet})
+
+@login_required
+def edit_code(request, pk):
+    # Get the original snippet
+    snippet = get_object_or_404(CodeSnippet, pk=pk, owner=request.user)
+    
+    if request.method == 'POST':
+        # Get the updated code content
+        code_content = request.POST.get('code_content')
+        
+        if not code_content:
+            messages.error(request, 'Code content cannot be empty')
+            return redirect('code_detail', pk=pk)
+        
+        # Create a new version
+        new_version = snippet.create_new_version(code_content)
+        
+        messages.success(request, f'Created version {new_version.version_number} of your code snippet')
+        return redirect('code_detail', pk=new_version.pk)
+    
+    return render(request, 'edit_code.html', {'snippet': snippet})
+
+@login_required
+def save_edited_code(request):
+    """AJAX endpoint to save edited code as a new version"""
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        snippet_id = data.get('snippet_id')
+        code_content = data.get('code_content')
+        
+        snippet = get_object_or_404(CodeSnippet, pk=snippet_id, owner=request.user)
+        
+        try:
+            # Create a new version
+            new_version = snippet.create_new_version(code_content)
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Created version {new_version.version_number}',
+                'new_url': reverse('code_detail', kwargs={'pk': new_version.pk}),
+                'version': new_version.version_number
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            }, status=400)
+            
+    return JsonResponse({'error': 'Only POST method is allowed'}, status=405)
 
 @login_required
 def chat_api(request):

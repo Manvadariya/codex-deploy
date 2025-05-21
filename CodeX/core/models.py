@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.urls import reverse
 
 LANGUAGE_CHOICES = [
     ('python', 'Python'),
@@ -38,9 +39,43 @@ class CodeSnippet(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    parent_snippet = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='versions')
+    version_number = models.PositiveIntegerField(default=1)
     
     def __str__(self):
+        if self.version_number > 1:
+            return f"{self.title} (v{self.version_number})"
         return self.title
+        
+    def get_absolute_url(self):
+        return reverse('code_detail', kwargs={'pk': self.pk})
+        
+    def create_new_version(self, new_code_content):
+        """Create a new version of this code snippet with the updated content"""
+        # Get the root snippet (the first version)
+        root_snippet = self
+        while root_snippet.parent_snippet:
+            root_snippet = root_snippet.parent_snippet
+            
+        # Find the highest version number among all versions
+        highest_version = CodeSnippet.objects.filter(
+            models.Q(pk=root_snippet.pk) | models.Q(parent_snippet=root_snippet)
+        ).order_by('-version_number').first().version_number
+        
+        # Create new version
+        new_version = CodeSnippet(
+            title=self.title,
+            description=self.description,
+            language=self.language,
+            owner=self.owner,
+            code_content=new_code_content,
+            user_input=self.user_input,
+            requirements=self.requirements,
+            parent_snippet=root_snippet,
+            version_number=highest_version + 1
+        )
+        new_version.save()
+        return new_version
 
 class CodeExecution(models.Model):
     code = models.ForeignKey(CodeSnippet, on_delete=models.CASCADE, related_name='executions')

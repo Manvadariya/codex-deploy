@@ -303,6 +303,110 @@ div.CodeMirror-gutter.CodeMirror-linenumbers {
     animation: pulse-subtle 2s infinite alternate;
 }
 
+/* Version Selector Styles */
+.version-selector {
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+    position: relative;
+}
+
+.version-label {
+    font-size: 0.75rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-right: 8px;
+}
+
+.version-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.version-dropdown-toggle {
+    background: rgba(30, 30, 30, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.version-dropdown-toggle:hover {
+    background: rgba(40, 40, 40, 0.9);
+    transform: translateY(-2px);
+}
+
+.version-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 8px;
+    background: rgba(25, 25, 25, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    min-width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+}
+
+.version-dropdown-menu.active {
+    display: block;
+    animation: fadeInDown 0.3s forwards;
+}
+
+.version-item {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 15px;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: background 0.2s ease;
+    position: relative;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.version-item:last-child {
+    border-bottom: none;
+}
+
+.version-item:hover {
+    background: rgba(60, 60, 60, 0.3);
+}
+
+.version-item.active {
+    background: rgba(10, 132, 255, 0.2);
+    color: var(--accent-color);
+}
+
+.version-date {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 3px;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Enhanced code header buttons */
 .code-actions {
     display: flex;

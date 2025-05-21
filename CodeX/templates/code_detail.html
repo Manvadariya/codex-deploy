@@ -134,22 +134,55 @@
                             <div class="language-name">
                                 <span class="language-icon">{ }</span>
                                 {{ snippet.language|capfirst }}
+                                
+                                {% if versions %}
+                                <div class="version-selector">
+                                    <span class="version-label">{{ snippet.version_number }}/{{ versions|length }}</span>
+                                    <div class="version-dropdown">
+                                        <button class="version-dropdown-toggle">
+                                            <i class="bi bi-clock-history"></i>
+                                            <span>Version History</span>
+                                        </button>
+                                        <div class="version-dropdown-menu">
+                                            {% for version in versions %}
+                                                <a href="{% url 'code_detail' pk=version.pk %}" class="version-item {% if version.pk == snippet.pk %}active{% endif %}">
+                                                    {% if version.version_number == 1 %}
+                                                        Original Version
+                                                    {% else %}
+                                                        Version {{ version.version_number }}
+                                                    {% endif %}
+                                                    <span class="version-date">{{ version.created_at|date:"M d, Y" }}</span>
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
                             </div>
-                            <div class="code-actions">
-                                <button class="btn-icon tooltip-container" id="copy-code">
+                            <div class="code-toolbar">
+                                <button id="copy-code" class="btn-icon" title="Copy Code">
                                     <i class="bi bi-clipboard"></i>
-                                    <span class="tooltip-text">Copy Code</span>
-                                    <div class="ripple-effect"></div>
+                                    <div class="tooltip">
+                                        <span class="tooltip-text">Copy Code</span>
+                                    </div>
                                 </button>
-                                <button class="btn-icon tooltip-container" id="download-code">
+                                <button id="download-code" class="btn-icon" title="Download Code">
                                     <i class="bi bi-download"></i>
-                                    <span class="tooltip-text">Download</span>
-                                    <div class="ripple-effect"></div>
+                                    <div class="tooltip">
+                                        <span class="tooltip-text">Download</span>
+                                    </div>
                                 </button>
-                                <button class="btn-icon tooltip-container" id="expand-code">
+                                <button id="edit-code" class="btn-icon" title="Edit Code">
+                                    <i class="bi bi-pencil-square"></i>
+                                    <div class="tooltip">
+                                        <span class="tooltip-text">Edit Code</span>
+                                    </div>
+                                </button>
+                                <button id="expand-code" class="btn-icon" title="View Fullscreen">
                                     <i class="bi bi-arrows-fullscreen"></i>
-                                    <span class="tooltip-text">Fullscreen</span>
-                                    <div class="ripple-effect"></div>
+                                    <div class="tooltip">
+                                        <span class="tooltip-text">Fullscreen</span>
+                                    </div>
                                 </button>
                             </div>
                         </div>

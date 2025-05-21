@@ -1,10 +1,15 @@
 // Initialize CodeMirror for code display
 let editor;
 let fileExtension;
+let isEditMode = false;
+let originalCode = '';
 
 document.addEventListener('DOMContentLoaded', function() {
     // Mobile navbar toggle
     const mobileToggle = document.querySelector('.mobile-toggle');
+    
+    // Initialize version dropdown functionality
+    initVersionDropdown();
     
     if (mobileToggle) {
         mobileToggle.addEventListener('click', function() {
@@ -606,3 +611,289 @@ window.addEventListener('scroll', function() {
         navbar.style.background = 'rgba(18, 18, 18, 0.85)';
     }
 });
+
+// Version dropdown functionality
+function initVersionDropdown() {
+    const dropdown = document.querySelector('.version-dropdown-toggle');
+    const dropdownMenu = document.querySelector('.version-dropdown-menu');
+    
+    if (dropdown && dropdownMenu) {
+        // Toggle dropdown on click
+        dropdown.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropdownMenu.classList.toggle('active');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!dropdown.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                dropdownMenu.classList.remove('active');
+            }
+        });
+    }
+}
+
+// Add edit functionality
+document.getElementById('edit-code')?.addEventListener('click', function() {
+    if (!isEditMode) {
+        // Enable edit mode
+        startEditMode();
+    } else {
+        // Save changes
+        saveChanges();
+    }
+});
+
+// Start edit mode
+function startEditMode() {
+    // Store original code content in case user cancels
+    originalCode = editor.getValue();
+    
+    // Make editor editable
+    editor.setOption('readOnly', false);
+    
+    // Change button appearance
+    const editButton = document.getElementById('edit-code');
+    editButton.querySelector('i').classList.remove('bi-pencil-square');
+    editButton.querySelector('i').classList.add('bi-save');
+    editButton.querySelector('.tooltip-text').textContent = 'Save Changes';
+    editButton.classList.add('edit-active');
+    
+    // Add cancel button if it doesn't exist
+    if (!document.getElementById('cancel-edit')) {
+        const cancelButton = document.createElement('button');
+        cancelButton.id = 'cancel-edit';
+        cancelButton.className = 'btn-icon';
+        cancelButton.title = 'Cancel Edit';
+        cancelButton.innerHTML = `
+            <i class="bi bi-x-circle"></i>
+            <div class="tooltip">
+                <span class="tooltip-text">Cancel Edit</span>
+            </div>
+        `;
+        
+        // Insert before fullscreen button
+        const toolbar = document.querySelector('.code-toolbar');
+        const fullscreenButton = document.getElementById('expand-code');
+        toolbar.insertBefore(cancelButton, fullscreenButton);
+        
+        // Add event listener
+        cancelButton.addEventListener('click', cancelEdit);
+    }
+    
+    isEditMode = true;
+    
+    // Add a status indicator
+    addEditModeIndicator();
+}
+
+// Cancel editing and revert changes
+function cancelEdit() {
+    // Restore original content
+    editor.setValue(originalCode);
+    
+    // Exit edit mode
+    exitEditMode();
+}
+
+// Exit edit mode without saving
+function exitEditMode() {
+    // Make editor read-only again
+    editor.setOption('readOnly', true);
+    
+    // Reset button appearance
+    const editButton = document.getElementById('edit-code');
+    editButton.querySelector('i').classList.remove('bi-save');
+    editButton.querySelector('i').classList.add('bi-pencil-square');
+    editButton.querySelector('.tooltip-text').textContent = 'Edit Code';
+    editButton.classList.remove('edit-active');
+    
+    // Remove cancel button
+    const cancelButton = document.getElementById('cancel-edit');
+    if (cancelButton) {
+        cancelButton.remove();
+    }
+    
+    // Remove edit mode indicator
+    const indicator = document.querySelector('.edit-mode-indicator');
+    if (indicator) {
+        indicator.remove();
+    }
+    
+    isEditMode = false;
+}
+
+// Add visual indicator for edit mode
+function addEditModeIndicator() {
+    const indicator = document.createElement('div');
+    indicator.className = 'edit-mode-indicator';
+    indicator.innerHTML = '<i class="bi bi-pencil-fill"></i> Edit Mode';
+    
+    // Add to code container
+    const codeContainer = document.querySelector('.code-container');
+    codeContainer.appendChild(indicator);
+    
+    // Add styles if not already in stylesheet
+    if (!document.querySelector('#edit-mode-styles')) {
+        const style = document.createElement('style');
+        style.id = 'edit-mode-styles';
+        style.textContent = `
+            .edit-mode-indicator {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: rgba(10, 132, 255, 0.2);
+                color: var(--accent-color);
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                z-index: 10;
+                border: 1px solid rgba(10, 132, 255, 0.3);
+                animation: pulse-subtle 2s infinite alternate;
+            }
+            .btn-icon.edit-active {
+                background: linear-gradient(145deg, var(--accent-color), var(--accent-secondary));
+                color: white;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Save changes as a new version
+function saveChanges() {
+    // Get edited code
+    const newCode = editor.getValue();
+    
+    // If no changes were made, just exit edit mode
+    if (newCode === originalCode) {
+        exitEditMode();
+        return;
+    }
+    
+    // Get the snippet ID from the URL
+    const pathParts = window.location.pathname.split('/');
+    const snippetId = pathParts[pathParts.indexOf('code') + 1];
+    
+    // Send to server
+    fetch('/core/api/save-edited-code/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+        },
+        body: JSON.stringify({
+            snippet_id: snippetId,
+            code_content: newCode
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success notification
+            showNotification(data.message, 'success');
+            
+            // Redirect to the new version
+            setTimeout(() => {
+                window.location.href = data.new_url;
+            }, 1500);
+        } else {
+            // Show error notification
+            showNotification(data.message || 'Error saving changes', 'error');
+            exitEditMode();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error saving changes', 'error');
+        exitEditMode();
+    });
+}
+
+// Get CSRF token from cookies
+function getCsrfToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Show notification
+function showNotification(message, type = 'success') {
+    // Create notification element if it doesn't exist
+    if (!document.querySelector('.notification-container')) {
+        const container = document.createElement('div');
+        container.className = 'notification-container';
+        document.body.appendChild(container);
+        
+        // Add styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .notification-container {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+            }
+            .notification {
+                background: var(--gradient-dark);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                transform: translateX(120%);
+                transition: transform 0.3s ease;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.1);
+            }
+            .notification.show {
+                transform: translateX(0);
+            }
+            .notification.success {
+                border-left: 4px solid var(--success-color);
+            }
+            .notification.error {
+                border-left: 4px solid var(--danger-color);
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Create notification
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    // Add to container
+    const container = document.querySelector('.notification-container');
+    container.appendChild(notification);
+    
+    // Trigger animation
+    setTimeout(() => notification.classList.add('show'), 10);
+    
+    // Remove after delay
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
