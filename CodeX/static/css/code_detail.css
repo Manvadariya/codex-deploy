@@ -260,7 +260,7 @@ div.CodeMirror-gutter.CodeMirror-linenumbers {
     align-items: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     position: relative;
-    z-index: 2;
+    z-index: 10;
 }
 
 .header-left {
@@ -323,7 +323,8 @@ div.CodeMirror-gutter.CodeMirror-linenumbers {
     align-items: center;
     position: relative;
     flex-shrink: 0;
-    z-index: 9999;
+    z-index: 9999 !important;
+    pointer-events: all !important;
 }
 
 .version-label {
@@ -338,7 +339,8 @@ div.CodeMirror-gutter.CodeMirror-linenumbers {
 .version-dropdown {
     position: relative;
     display: inline-block;
-    z-index: 9999;
+    z-index: 9999 !important;
+    pointer-events: all !important;
 }
 
 .version-dropdown-toggle {
@@ -373,8 +375,9 @@ div.CodeMirror-gutter.CodeMirror-linenumbers {
     min-width: 200px;
     max-height: 300px;
     overflow-y: auto;
-    z-index: 9999;
+    z-index: 9999 !important;
     display: none;
+    pointer-events: all !important;
 }
 
 .version-dropdown-menu.active {
@@ -538,7 +541,7 @@ div.CodeMirror-gutter.CodeMirror-linenumbers {
 /* Enhanced code editor container */
 .editor-container {
     position: relative;
-    z-index: 2;
+    z-index: 1;
     background: rgba(20, 20, 20, 0.8);
 }
 
