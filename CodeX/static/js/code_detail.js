@@ -684,8 +684,8 @@ function startEditMode() {
     
     isEditMode = true;
     
-    // Add a status indicator
-    addEditModeIndicator();
+    // We're removing the edit mode indicator as requested
+    // addEditModeIndicator();
 }
 
 // Cancel editing and revert changes
