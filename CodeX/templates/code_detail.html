@@ -131,9 +131,11 @@
                         </div>
                         
                         <div class="code-header">
-                            <div class="language-name">
-                                <span class="language-icon">{ }</span>
-                                {{ snippet.language|capfirst }}
+                            <div class="header-left">
+                                <div class="language-name">
+                                    <span class="language-icon">{ }</span>
+                                    {{ snippet.language|capfirst }}
+                                </div>
                                 
                                 {% if versions %}
                                 <div class="version-selector">

@@ -263,6 +263,19 @@ div.CodeMirror-gutter.CodeMirror-linenumbers {
     z-index: 2;
 }
 
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.code-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-direction: row;
+}
+
 /* Enhanced language badge */
 .language-name {
     color: var(--text-color);
@@ -277,6 +290,7 @@ div.CodeMirror-gutter.CodeMirror-linenumbers {
     border: 1px solid rgba(255, 255, 255, 0.05);
     position: relative;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .language-name::before {
@@ -307,8 +321,8 @@ div.CodeMirror-gutter.CodeMirror-linenumbers {
 .version-selector {
     display: flex;
     align-items: center;
-    margin-left: 15px;
     position: relative;
+    flex-shrink: 0;
 }
 
 .version-label {
@@ -414,8 +428,8 @@ div.CodeMirror-gutter.CodeMirror-linenumbers {
 }
 
 .btn-icon {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -428,6 +442,7 @@ div.CodeMirror-gutter.CodeMirror-linenumbers {
     position: relative;
     overflow: hidden;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    margin: 0 3px;
 }
 
 .btn-icon::before {
