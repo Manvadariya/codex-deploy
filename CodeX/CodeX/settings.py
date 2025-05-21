@@ -29,7 +29,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-065d92nuxqg2^ft07qfuqcu%+s)hjnqcvmem3wbc#vg_$17p^y')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+# Temporarily set DEBUG to True to see the actual errors
+DEBUG = True
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') or ['localhost', '127.0.0.1', '.onrender.com']
 
@@ -121,6 +122,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'debug': True,  # Show template errors
         },
     },
 ]
