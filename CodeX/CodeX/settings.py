@@ -110,6 +110,9 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 # Optional: Skip email verification
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
+# Make default site ID explicit for django-allauth
+SITE_ID = 1
+
 LOGIN_REDIRECT_URL = '/core/dashboard/'  # Where to redirect after successful login
 LOGIN_URL = '/core/login/' # Where to redirect after unsuccessful login
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'  # Redirect after logout
