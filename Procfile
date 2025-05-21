@@ -1,1 +1,1 @@
-web: cd CodeX && gunicorn CodeX.wsgi:application
+web: cd CodeX && python migrate_and_run.py && gunicorn CodeX.wsgi:application
