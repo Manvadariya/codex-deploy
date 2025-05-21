@@ -3,8 +3,8 @@ services:
   - type: web
     name: codex
     env: python
-    buildCommand: chmod +x ./init_db.sh && ./build.sh
-    startCommand: bash ./init_db.sh && cd CodeX && gunicorn CodeX.wsgi:application
+    buildCommand: ./build.sh
+    startCommand: bash ./init_db.sh && python CodeX/manage.py migrate --noinput && cd CodeX && gunicorn CodeX.wsgi:application
     envVars:
       - key: DEBUG
         value: False

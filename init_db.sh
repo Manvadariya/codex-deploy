@@ -3,36 +3,77 @@
 
 set -e  # Exit immediately if a command exits with a non-zero status
 
-echo "=== DATABASE INITIALIZATION SCRIPT ==="
+echo "=== DATABASE INITIALIZATION SCRIPT (init_db.sh) STARTING ==="
 
-# Determine database type and configure connection
-DB_URL="${DATABASE_URL}"
-if [[ $DB_URL == sqlite* ]]; then
+# Ensure DATABASE_URL is set
+if [ -z "$DATABASE_URL" ]; then
+  echo "Error: DATABASE_URL environment variable is not set."
+  exit 1
+fi
+
+echo "DATABASE_URL: $DATABASE_URL" # Log the DATABASE_URL to verify it's being picked up
+
+DB_TYPE=""
+SQLITE_FILE=""
+
+if [[ $DATABASE_URL == sqlite* ]]; then
   echo "Using SQLite database"
   DB_TYPE="sqlite"
-  SQLITE_FILE="${DB_URL#sqlite:///}"
-  echo "Database file: $SQLITE_FILE"
-elif [[ $DB_URL == postgres* ]]; then
+  SQLITE_FILE="${DATABASE_URL#sqlite:///}"
+  # Ensure the directory for the SQLite file exists if it's not in the root
+  SQLITE_DIR=$(dirname "$SQLITE_FILE")
+  if [ "$SQLITE_DIR" != "." ] && [ ! -d "$SQLITE_DIR" ]; then
+    mkdir -p "$SQLITE_DIR"
+    echo "Created directory for SQLite database: $SQLITE_DIR"
+  fi
+  echo "SQLite database file: $SQLITE_FILE"
+elif [[ $DATABASE_URL == postgres* ]] || [[ $DATABASE_URL == postgresql* ]]; then
   echo "Using PostgreSQL database"
   DB_TYPE="postgres"
-  # Extract connection details from DATABASE_URL
-  DB_HOST=$(echo $DATABASE_URL | cut -d@ -f2 | cut -d/ -f1 | cut -d: -f1)
-  DB_PORT=$(echo $DATABASE_URL | cut -d@ -f2 | cut -d/ -f1 | cut -d: -f2)
-  DB_NAME=$(echo $DATABASE_URL | cut -d/ -f4 | cut -d? -f1)
-  DB_USER=$(echo $DATABASE_URL | cut -d: -f2 | cut -d@ -f1 | cut -d/ -f3)
-  DB_PASS=$(echo $DATABASE_URL | cut -d: -f3 | cut -d@ -f1)
-  echo "Database details: Host=$DB_HOST, Port=$DB_PORT, Name=$DB_NAME, User=$DB_USER"
+  # Connection details will be used by psql via DATABASE_URL
 else
-  echo "Unknown database URL format: $DB_URL"
+  echo "Unknown or unsupported database URL format: $DATABASE_URL"
   exit 1
 fi
 
 # Create essential tables directly if they don't exist
+# This section is primarily for SQLite or as a fallback.
+# For PostgreSQL, Django migrations should handle this if the DB user has permissions.
+
 if [[ $DB_TYPE == "sqlite" ]]; then
-  echo "Creating essential tables in SQLite..."
+  echo "Attempting to create essential tables in SQLite (if they don't exist)..."
   
+  # Ensure the SQLite file exists before trying to run commands against it
+  touch "$SQLITE_FILE" 
+
   sqlite3 "$SQLITE_FILE" <<EOF
-  -- Check if auth_user exists
+  CREATE TABLE IF NOT EXISTS django_migrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    app VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    applied DATETIME NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS django_content_type (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    app_label VARCHAR(100) NOT NULL,
+    model VARCHAR(100) NOT NULL,
+    UNIQUE (app_label, model)
+  );
+
+  CREATE TABLE IF NOT EXISTS auth_permission (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    content_type_id INTEGER NOT NULL REFERENCES django_content_type (id) DEFERRABLE INITIALLY DEFERRED,
+    codename VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    UNIQUE (content_type_id, codename)
+  );
+  
+  CREATE TABLE IF NOT EXISTS auth_group (
+    id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name varchar(150) NOT NULL UNIQUE
+  );
+
   CREATE TABLE IF NOT EXISTS auth_user (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     password VARCHAR(128) NOT NULL,
@@ -47,153 +88,137 @@ if [[ $DB_TYPE == "sqlite" ]]; then
     date_joined DATETIME NOT NULL
   );
 
-  -- Check if django_site exists
   CREATE TABLE IF NOT EXISTS django_site (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    domain VARCHAR(100) NOT NULL,
+    domain VARCHAR(100) NOT NULL UNIQUE,
     name VARCHAR(50) NOT NULL
   );
-  
-  -- Insert default site if not exists
-  INSERT OR IGNORE INTO django_site (id, domain, name) 
-  VALUES (1, 'codex-j9wc.onrender.com', 'CodeX');
-  
-  -- Check if django_content_type exists
-  CREATE TABLE IF NOT EXISTS django_content_type (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    app_label VARCHAR(100) NOT NULL,
-    model VARCHAR(100) NOT NULL,
-    UNIQUE (app_label, model)
-  );
-  
-  -- Check if auth_permission exists
-  CREATE TABLE IF NOT EXISTS auth_permission (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    content_type_id INTEGER NOT NULL REFERENCES django_content_type (id),
-    codename VARCHAR(100) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    UNIQUE (content_type_id, codename)
-  );
-
-  -- Check if django_migrations exists
-  CREATE TABLE IF NOT EXISTS django_migrations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    app VARCHAR(255) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    applied DATETIME NOT NULL
-  );
 EOF
+  echo "SQLite table creation/check complete."
 
 elif [[ $DB_TYPE == "postgres" ]]; then
-  echo "Creating essential tables in PostgreSQL..."
-  
-  # Create temporary SQL file
-  TMP_SQL=$(mktemp)
-  cat > "$TMP_SQL" <<EOF
-  -- Check if auth_user exists
-  CREATE TABLE IF NOT EXISTS auth_user (
-    id SERIAL PRIMARY KEY,
-    password VARCHAR(128) NOT NULL,
-    last_login TIMESTAMP WITH TIME ZONE NULL,
-    is_superuser BOOLEAN NOT NULL,
-    username VARCHAR(150) NOT NULL UNIQUE,
-    first_name VARCHAR(150) NOT NULL,
-    last_name VARCHAR(150) NOT NULL,
-    email VARCHAR(254) NOT NULL,
-    is_staff BOOLEAN NOT NULL,
-    is_active BOOLEAN NOT NULL,
-    date_joined TIMESTAMP WITH TIME ZONE NOT NULL
-  );
-
-  -- Check if django_site exists
-  CREATE TABLE IF NOT EXISTS django_site (
-    id SERIAL PRIMARY KEY,
-    domain VARCHAR(100) NOT NULL,
-    name VARCHAR(50) NOT NULL
-  );
-  
-  -- Insert default site if not exists
-  INSERT INTO django_site (id, domain, name) 
-  VALUES (1, 'codex-j9wc.onrender.com', 'CodeX')
-  ON CONFLICT (id) DO UPDATE 
-  SET domain = 'codex-j9wc.onrender.com', name = 'CodeX';
-  
-  -- Check if django_content_type exists
-  CREATE TABLE IF NOT EXISTS django_content_type (
-    id SERIAL PRIMARY KEY,
-    app_label VARCHAR(100) NOT NULL,
-    model VARCHAR(100) NOT NULL,
-    UNIQUE (app_label, model)
-  );
-  
-  -- Check if auth_permission exists
-  CREATE TABLE IF NOT EXISTS auth_permission (
-    id SERIAL PRIMARY KEY,
-    content_type_id INTEGER NOT NULL REFERENCES django_content_type (id),
-    codename VARCHAR(100) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    UNIQUE (content_type_id, codename)
-  );
-
-  -- Check if django_migrations exists
-  CREATE TABLE IF NOT EXISTS django_migrations (
-    id SERIAL PRIMARY KEY,
-    app VARCHAR(255) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    applied TIMESTAMP WITH TIME ZONE NOT NULL
-  );
-EOF
-
-  # Run SQL commands
-  export PGPASSWORD="$DB_PASS"
-  psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$TMP_SQL"
-  
-  # Clean up
-  rm "$TMP_SQL"
+  echo "For PostgreSQL, table creation is expected to be handled by Django migrations."
+  # Optionally, you could add psql commands here to create tables if migrations fail,
+  # but it's generally better to let Django manage the schema.
+  # Example:
+  # echo "Verifying PostgreSQL connection..."
+  # PGPASSWORD=${DATABASE_URL##*:} psql -h ${DATABASE_URL%%:*} -U ${DATABASE_URL##*@} -d ${DATABASE_URL##*/} -c "\\dt"
+  # The above is complex due to DATABASE_URL parsing, prefer direct psql if needed and parse components.
 fi
 
-echo "Tables created directly. Now running Django migrations..."
+echo "Changing directory to /opt/render/project/src/CodeX for manage.py"
 cd /opt/render/project/src/CodeX
-python manage.py migrate auth --noinput || echo "Warning: auth migration failed"
-python manage.py migrate contenttypes --noinput || echo "Warning: contenttypes migration failed"
-python manage.py migrate sites --noinput || echo "Warning: sites migration failed"
-python manage.py migrate allauth --noinput || echo "Warning: allauth migration failed"
-python manage.py migrate --noinput || echo "Warning: general migrations failed"
 
-echo "Running post-migration checks..."
+# It's crucial that DATABASE_URL is correctly interpreted by Django/dj_database_url
+echo "Running Django makemigrations for core app (and others if needed)..."
+python manage.py makemigrations core || echo "Makemigrations for core failed or no changes."
+python manage.py makemigrations || echo "Makemigrations for other apps failed or no changes."
+
+
+echo "Running Django migrate..."
+# Run migrations for specific apps first if there are dependencies
+python manage.py migrate contenttypes --noinput
+python manage.py migrate auth --noinput
+python manage.py migrate sites --noinput 
+# Then run all other migrations
+python manage.py migrate --noinput
+
+echo "Running post-migration checks and Site object creation..."
 python - <<EOF
 import os
 import django
+from django.conf import settings
+from django.db import connection, utils
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'CodeX.settings')
-django.setup()
+print(f"Attempting to set up Django with DJANGO_SETTINGS_MODULE: {os.environ.get('DJANGO_SETTINGS_MODULE')}")
+if not os.environ.get('DJANGO_SETTINGS_MODULE'):
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'CodeX.settings')
 
-from django.db import connection
+try:
+    django.setup()
+    print("Django setup successful.")
+except Exception as e:
+    print(f"Error during Django setup: {e}")
+    # Attempt to load settings to see if DATABASES is configured
+    try:
+        from CodeX import settings as app_settings
+        print(f"DATABASES configured in settings: {hasattr(app_settings, 'DATABASES')}")
+        if hasattr(app_settings, 'DATABASES'):
+            print(f"Default DB Engine: {app_settings.DATABASES['default']['ENGINE']}")
+    except Exception as se:
+        print(f"Could not load settings directly: {se}")
+    exit(1)
 
-print("Checking essential tables...")
-tables_to_check = ['auth_user', 'django_site', 'socialaccount_socialaccount']
+print(f"Using database: {settings.DATABASES['default']['ENGINE']}")
+if 'sqlite' in settings.DATABASES['default']['ENGINE']:
+    print(f"SQLite DB Name: {settings.DATABASES['default']['NAME']}")
+
+print("Checking essential tables post-migration...")
+tables_to_check = ['auth_user', 'django_site', 'django_content_type', 'auth_permission', 'socialaccount_socialaccount', 'socialaccount_socialapp']
 with connection.cursor() as cursor:
-    for table in tables_to_check:
+    for table_name in tables_to_check:
         try:
-            cursor.execute(f"SELECT COUNT(*) FROM \"{table}\"")
+            cursor.execute(f"SELECT COUNT(*) FROM {table_name}") # Standard SQL, should work for both
             count = cursor.fetchone()[0]
-            print(f"Table {table}: {count} rows")
+            print(f"Table '{table_name}': {count} rows")
+        except utils.ProgrammingError:
+            print(f"Table '{table_name}' does not exist or query failed.")
         except Exception as e:
-            print(f"Error checking {table}: {str(e)}")
+            print(f"Error checking table '{table_name}': {str(e)}")
 
-print("Ensuring Site entry exists...")
+print("Ensuring Site entry (ID=1) exists or is created...")
 from django.contrib.sites.models import Site
+from django.conf import settings
+
+site_id = getattr(settings, 'SITE_ID', 1)
+render_domain = os.environ.get('RENDER_EXTERNAL_HOSTNAME', f'codex-{os.environ.get("RENDER_SERVICE_ID", "xxxx")}.onrender.com')
+
 try:
     site, created = Site.objects.get_or_create(
-        id=1,
-        defaults={
-            'domain': 'codex-j9wc.onrender.com',
-            'name': 'CodeX'
-        }
+        id=site_id,
+        defaults={'domain': render_domain, 'name': 'CodeX'}
     )
-    print(f"Site {'created' if created else 'already exists'}: {site.domain}")
+    if not created and site.domain != render_domain:
+        print(f"Site ID {site_id} exists, updating domain from {site.domain} to {render_domain}")
+        site.domain = render_domain
+        site.name = 'CodeX' # Ensure name is also set/updated
+        site.save()
+        print(f"Site domain updated to: {site.domain}")
+    else:
+        print(f"Site {'created' if created else 'already exists and is current'}: ID={site.id}, Domain={site.domain}, Name={site.name}")
+
 except Exception as e:
-    print(f"Error creating site: {str(e)}")
+    print(f"Error ensuring Site object: {str(e)}")
+    # If Site table doesn't exist, this will fail. The check above should indicate this.
+
+# For allauth, ensure the Google provider has the correct site
+if 'allauth.socialaccount' in settings.INSTALLED_APPS:
+    print("Checking/Updating SocialApp for Google provider...")
+    from allauth.socialaccount.models import SocialApp
+    try:
+        google_provider_app = SocialApp.objects.filter(provider='google').first()
+        if google_provider_app:
+            if site not in google_provider_app.sites.all():
+                google_provider_app.sites.add(site)
+                print(f"Added site '{site.domain}' to Google SocialApp.")
+            else:
+                print(f"Site '{site.domain}' already associated with Google SocialApp.")
+        else:
+            print("Google SocialApp not found. Please configure it in Django Admin if using Google OAuth.")
+            # Optionally, create it if client_id and secret are available, but admin setup is safer.
+            # if settings.SOCIALACCOUNT_PROVIDERS.get('google', {}).get('APP', {}).get('client_id'):
+            #     SocialApp.objects.create(
+            #         provider='google',
+            #         name='Google',
+            #         client_id=settings.SOCIALACCOUNT_PROVIDERS['google']['APP']['client_id'],
+            #         secret=settings.SOCIALACCOUNT_PROVIDERS['google']['APP']['secret'],
+            #     ).sites.add(site)
+            #     print("Created Google SocialApp and associated with site.")
+
+    except Exception as e:
+        print(f"Error configuring SocialApp for Google: {str(e)}")
+        print("This might be due to 'socialaccount_socialapp' or 'socialaccount_socialapp_sites' tables not existing.")
+
 EOF
 
-echo "=== DATABASE INITIALIZATION COMPLETED ==="
+echo "=== DATABASE INITIALIZATION SCRIPT (init_db.sh) COMPLETED ==="
