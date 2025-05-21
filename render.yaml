@@ -4,7 +4,7 @@ services:
     name: codex
     env: python
     buildCommand: ./build.sh
-    startCommand: bash ./init_db.sh && python CodeX/manage.py migrate --noinput && cd CodeX && gunicorn CodeX.wsgi:application
+    startCommand: bash ./init_db.sh && python CodeX/manage.py migrate --noinput && cd CodeX && gunicorn CodeX.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: DEBUG
         value: False
