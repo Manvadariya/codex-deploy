@@ -4,7 +4,9 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.urls import reverse
 import json
+import traceback
 from .models import CodeSnippet, AIAssistance
 import uuid
 from openai import OpenAI
@@ -127,33 +129,64 @@ def login_page(request):
                 return redirect('dashboard')
             else:
                 messages.error(request, 'Invalid username or password.')
-        return render(request, 'login.html')
+        
+        # Add social account providers to context
+        from allauth.socialaccount import providers
+        from allauth.socialaccount.providers.oauth2.provider import OAuth2Provider
+        
+        provider_list = [p for p in providers.registry.get_list() if issubclass(p.get_class(), OAuth2Provider)]
+        
+        return render(request, 'login.html', {
+            'socialaccount_providers': provider_list
+        })
     except Exception as e:
-        # Log the error
+        # Log the error with full details
+        import traceback
         print(f"Login error: {str(e)}")
+        print(traceback.format_exc())
         # Return a simple response instead of crashing
-        messages.error(request, 'An error occurred during login. Please try again.')
-        return render(request, 'login.html')
+        messages.error(request, f'An error occurred during login: {str(e)}')
+        return render(request, 'login.html', {'error_details': str(e)})
 
 def register(request):
     try:
         if request.method == 'POST':
             form = UserCreationForm(request.POST)
             if form.is_valid():
-                form.save()
+                # Create the user
+                user = form.save()
                 username = form.cleaned_data.get('username')
-                messages.success(request, f'Account created for {username}! You can now log in.')
-                return redirect('login_page')
+                
+                # Log the user in automatically
+                user = authenticate(username=username, 
+                                   password=form.cleaned_data.get('password1'))
+                if user is not None:
+                    login(request, user)
+                    return redirect('dashboard')
+                else:
+                    messages.success(request, f'Account created for {username}! You can now log in.')
+                    # Use reverse to get the URL
+                    from django.urls import reverse
+                    return redirect(reverse('login_page'))
+            else:
+                # If form is invalid, show errors
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
         else:
             form = UserCreationForm()
+        
         return render(request, 'register.html', {'form': form})
     except Exception as e:
-        # Log the error
+        # Log the error with full traceback
+        import traceback
         print(f"Registration error: {str(e)}")
+        print(traceback.format_exc())
+        
         # Return a simple response instead of crashing
-        messages.error(request, 'An error occurred during registration. Please try again.')
+        messages.error(request, f'An error occurred during registration: {str(e)}')
         form = UserCreationForm()
-        return render(request, 'register.html', {'form': form})
+        return render(request, 'register.html', {'form': form, 'error_details': str(e)})
 
 @login_required
 def dashboard(request):
