@@ -4,7 +4,7 @@ services:
     name: codex
     env: python
     buildCommand: ./build.sh
-    startCommand: cd CodeX && gunicorn CodeX.wsgi:application
+    startCommand: cd CodeX && python migrate_and_run.py && gunicorn CodeX.wsgi:application
     envVars:
       - key: DEBUG
         value: False

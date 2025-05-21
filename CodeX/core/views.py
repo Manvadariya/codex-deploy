@@ -130,15 +130,8 @@ def login_page(request):
             else:
                 messages.error(request, 'Invalid username or password.')
         
-        # Add social account providers to context
-        from allauth.socialaccount import providers
-        from allauth.socialaccount.providers.oauth2.provider import OAuth2Provider
-        
-        provider_list = [p for p in providers.registry.get_list() if issubclass(p.get_class(), OAuth2Provider)]
-        
-        return render(request, 'login.html', {
-            'socialaccount_providers': provider_list
-        })
+        # Simplified - don't try to access social account providers
+        return render(request, 'login.html')
     except Exception as e:
         # Log the error with full details
         import traceback
