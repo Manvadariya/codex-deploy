@@ -15,11 +15,14 @@ import re
 API_KEY = "paste_your_api_key_here"  # Replace with your actual API key
 BASE_URL = "https://models.inference.ai.azure.com"
 
+# Default client instance
+default_client = OpenAI(
+    api_key=API_KEY,
+    base_url=BASE_URL
+)
+
 # Global variable to store the most recently used API key
 current_api_key = API_KEY
-
-# We'll initialize the OpenAI client only when needed, not at module load time
-default_client = None
 
 def get_openai_client(api_key=None):
     """
@@ -33,7 +36,7 @@ def get_openai_client(api_key=None):
     Returns:
         OpenAI: Configured OpenAI client
     """
-    global current_api_key, default_client
+    global current_api_key
     
     # If an API key is provided, store it for future use
     if api_key:
@@ -50,22 +53,12 @@ def get_openai_client(api_key=None):
             base_url=BASE_URL
         )
     
-    # If we already have a default client, return that
-    if default_client is not None:
-        return default_client
-    
-    # If no client exists but we have a valid API key (not the placeholder)
-    if current_api_key != "paste_your_api_key_here":
-        print("Using previously stored API key")
-        default_client = OpenAI(
-            api_key=current_api_key,
-            base_url=BASE_URL
-        )
-        return default_client
-    
-    # Return None if we don't have a valid API key
-    # This will be handled by the calling function
-    return None
+    # If no API key is provided, use the most recently stored one
+    print("Using previously stored API key")
+    return OpenAI(
+        api_key=current_api_key,
+        base_url=BASE_URL
+    )
 
 def chat_with_gpt(prompt, chat_history, api_key=None):
     """
@@ -102,10 +95,6 @@ def chat_with_gpt(prompt, chat_history, api_key=None):
         # Get a client with the appropriate API key
         client = get_openai_client(api_key)
         
-        # Check if we have a valid client
-        if client is None:
-            return "Error: API key not configured. Please set up your API key first."
-        
         # Determine model based on API key type
         model = "gpt-4.1"  # Default model
         
@@ -124,8 +113,6 @@ def chat_with_gpt(prompt, chat_history, api_key=None):
         
         if "401" in error_message or "unauthorized" in error_message.lower() or "authentication" in error_message.lower():
             return "Error: Authentication failed. Your API key appears to be invalid or expired."
-            
-        return f"Sorry, there was an error processing your request: {error_message}"
         elif "rate limit" in error_message.lower() or "429" in error_message:
             return "Error: Rate limit exceeded. Please try again later."
         else:
