@@ -22,6 +22,7 @@ services:
       - key: GOOGLE_CLIENT_SECRET
 
 databases:
-  - name: codex_db
-    databaseName: codex
+  - name: codex-db
+    engine: postgresql
     plan: free
+    version: "16"

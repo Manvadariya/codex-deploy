@@ -143,10 +143,16 @@ WSGI_APPLICATION = 'CodeX.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 # Use SQLite locally or PostgreSQL in production (Render provides a PostgreSQL database)
+# settings.py
+
+import os
+import dj_database_url
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', f'sqlite:///{os.path.join(BASE_DIR, "db.sqlite3")}'),
-        conn_max_age=600
+        default=os.environ['DATABASE_URL'],      # rely on your env var
+        conn_max_age=600,                        # reuse DB connections
+        ssl_require=True                         # enforce SSL
     )
 }
 
