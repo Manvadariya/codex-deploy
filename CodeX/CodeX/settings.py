@@ -149,8 +149,8 @@ import os
 import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ['DATABASE_URL'],      # rely on your env var
+    'default': dj_database_url.parse(
+        os.environ['DATABASE_URL'],      # rely on your env var
         conn_max_age=600,                        # reuse DB connections
         ssl_require=True                         # enforce SSL
     )
