@@ -45,6 +45,8 @@ def get_openai_client(api_key=None):
         # Check if it's a GitHub token
         if api_key.startswith('ghp_'):
             pass
+        if api_key.startswitch('github_"):
+            pass
         
         # Create a new client with the provided API key
         return OpenAI(
