@@ -915,7 +915,8 @@ Please go to Settings and enter a valid API key:
                         data.response.includes("401")) {
                         
                         // Determine which kind of API key is being used
-                        const apiKeyType = localStorage.getItem('githubApiKey')?.startsWith('ghp_') ? 'GitHub token' : 'API key';
+                        const apiKeyRaw = localStorage.getItem('githubApiKey') || '';
+                        const apiKeyType = (apiKeyRaw.startsWith('ghp_') || apiKeyRaw.startsWith('github_')) ? 'GitHub token' : 'API key';
                         
                         addChatMessage(`There seems to be an issue with your ${apiKeyType}. Please check that it's valid in the Settings panel. 
                         
