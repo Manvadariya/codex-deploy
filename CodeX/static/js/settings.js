@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Validate API key format (support for OpenAI and GitHub tokens)
                 if (apiKey) {
-                    if (!apiKey.startsWith('sk-') && !apiKey.startsWith('ghp_')) {
+                    if (!apiKey.startsWith('sk-') && !apiKey.startsWith('ghp_') && !apiKey.startsWith('github_')) {
                         alert('Warning: This does not appear to be a valid API key. OpenAI API keys start with "sk-" and GitHub tokens start with "ghp_".');
                     } else if (apiKey.length < 30) {
                         alert('Warning: This API key appears too short. Make sure you\'ve copied the entire API key.');
