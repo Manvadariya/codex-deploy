@@ -880,7 +880,7 @@ Example:
                 const githubApiKey = localStorage.getItem('githubApiKey');                // Validate the API key format before sending
                 if (githubApiKey) {
                     // Check for valid API key formats
-                    if (!githubApiKey.startsWith('sk-') && !githubApiKey.startsWith('ghp_')) {
+                    if (!githubApiKey.startsWith('sk-') && !githubApiKey.startsWith('ghp_') && !githubApiKey.startsWith('github_')) {
                         loadingElement.remove();
                         addChatMessage(`Error: Invalid API key format. Your key should either start with "sk-" (OpenAI) or "ghp_" (GitHub).
 
